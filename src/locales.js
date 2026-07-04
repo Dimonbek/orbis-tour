@@ -1,0 +1,129 @@
+const { dbApi } = require('./database');
+
+const defaultLocales = {
+  uz: {
+    chooseLanguage: "🌐 Tilni tanlang / Выберите язык:",
+    welcome: "Assalomu alaykum! 👋\n\n\"ORBIS TOUR\" botiga xush kelibsiz.\n\nSizga eng yaxshi sayohatni tashkil etish uchun bir necha savol beramiz.",
+    askName: "👤 Ism va familiyangizni kiriting:\n_Masalan: Akmal Karimov_",
+    askDestination: "📍 Qayerga uchmoqchisiz?\n_Tour paketdan birini tanlang yoki \"Boshqa shahar\"._",
+    askCustomDestination: "📍 Shahar yoki davlat nomini yozing:\n_Masalan: Misr, Ispaniya, Italiya_",
+    askDate: "📅 Qachon jo'naysiz?",
+    askPeople: "👥 Necha kishi borasiz?",
+    askPeopleCustom: "👥 Necha kishi? Sonni yozing (1-50):",
+    askChildren: "👶 Bolalar bormi?",
+    askChildrenCount: "👶 Bolalar nechta?",
+    askChildAge: "🎂 {n}-bola yoshini tanlang ({n}/{total}):",
+    askContactTime: "📞 Qachon telefon qilish mumkin?",
+    askPhone: "📱 Telefon raqamingizni kiriting yoki pastdagi tugmani bosing:",
+    finish: "✅ Rahmat! Menejerlarimiz tez orada siz bilan bog'lanishadi.",
+    yes: "Ha",
+    no: "Yo'q",
+    sharePhone: "📱 Telefon raqamini yuborish",
+    changeLanguage: "🌐 Til / Язык",
+    backBtn: "⬅️ Ortga",
+    // Date options
+    dateSoon: "🗓 Yaqin kunlarda",
+    dateNextMonth: "📅 Keyingi oy",
+    date3Months: "🌙 Uch oydan so'ng",
+    dateCheap: "💰 Qaysi arzon bo'lsa",
+    // People options
+    peopleAlone: "1 (yakka)",
+    peoplePartner: "😄 Sherik topilar",
+    peopleMore: "👥 Boshqa son...",
+    // Age options
+    age0_2: "👶 0-2 yosh",
+    age3_6: "🧒 3-6 yosh",
+    age7_11: "👦 7-11 yosh",
+    age12plus: "🧑 12+ yosh",
+    // Errors
+    invalidPhone: "❌ Telefon raqamini to'g'ri kiriting yoki tugmani bosing.\n_Kamida 7 ta raqam._",
+    invalidName: "❌ Iltimos, haqiqiy ism familiya kiriting.\n_Faqat harflar, kamida 3 ta belgi._\n_Masalan: Akmal Karimov_",
+    invalidDestination: "❌ Iltimos, haqiqiy joy nomini kiriting.\n_Masalan: Dubay, Arabiston, Turkiya_",
+    invalidPeople: "❌ Iltimos, son kiriting (1-50).\n_Masalan: 7 yoki 12_",
+    invalidChildrenCount: "❌ Iltimos, bolalar sonini son ko'rinishida kiriting (1-50).",
+    invalidChildrenMath: "❌ Bolalar soni umumiy odam sonidan kam bo'lishi kerak!\nSiz {p} kishi yozgansiz, bolalar soni {c} bo'lishi mumkin emas.",
+    blocked: "❌ Siz bloklangansiz.",
+    botInactive: "Bot vaqtincha ishlamayapti. Iltimos, keyinroq urinib ko'ring.",
+    g_name: "👤 Ismi",
+    g_destination: "📍 Yo'nalish",
+    g_date: "📅 Sana",
+    g_people: "👥 Odam soni",
+    g_children: "👶 Bolalar",
+    g_childrenYes: "Bor",
+    g_childrenNo: "Yo'q",
+    g_childrenAges: "yoshlari",
+    g_contactTime: "📞 Bog'lanish vaqti",
+    g_phone: "📱 Telefon",
+    g_username: "👨‍💻 Username",
+    g_newRequest: "🆕 YANGI SO'ROV",
+  },
+  ru: {
+    chooseLanguage: "🌐 Tilni tanlang / Выберите язык:",
+    welcome: "Здравствуйте! 👋\n\nДобро пожаловать в бот \"ORBIS TOUR\".\n\nМы зададим несколько вопросов, чтобы организовать для вас лучшее путешествие.",
+    askName: "👤 Введите ваше имя и фамилию:\n_Например: Акмал Каримов_",
+    askDestination: "📍 Куда хотите полететь?\n_Выберите тур или нажмите \"Другой город\"._",
+    askCustomDestination: "📍 Введите название города или страны:\n_Например: Египет, Испания, Италия_",
+    askDate: "📅 Когда планируете полететь?",
+    askPeople: "👥 Сколько человек?",
+    askPeopleCustom: "👥 Сколько человек? Введите число (1-50):",
+    askChildren: "👶 Есть ли дети?",
+    askChildrenCount: "👶 Сколько детей?",
+    askChildAge: "🎂 Возраст ребёнка #{n} ({n}/{total}):",
+    askContactTime: "📞 Когда удобно позвонить?",
+    askPhone: "📱 Введите ваш номер телефона или нажмите кнопку ниже:",
+    finish: "✅ Спасибо! Наши менеджеры свяжутся с вами в ближайшее время.",
+    yes: "Да",
+    no: "Нет",
+    sharePhone: "📱 Отправить номер телефона",
+    changeLanguage: "🌐 Til / Язык",
+    backBtn: "⬅️ Назад",
+    dateSoon: "🗓 В ближайшие дни",
+    dateNextMonth: "📅 Следующий месяц",
+    date3Months: "🌙 Через три месяца",
+    dateCheap: "💰 Когда дешевле",
+    peopleAlone: "1 (один)",
+    peoplePartner: "😄 Найдём попутчика",
+    peopleMore: "👥 Другое число...",
+    age0_2: "👶 0-2 года",
+    age3_6: "🧒 3-6 лет",
+    age7_11: "👦 7-11 лет",
+    age12plus: "🧑 12+ лет",
+    invalidPhone: "❌ Введите номер телефона правильно или нажмите кнопку.\n_Минимум 7 цифр._",
+    invalidName: "❌ Пожалуйста, введите настоящее имя и фамилию.\n_Только буквы, минимум 3 символа._",
+    invalidDestination: "❌ Пожалуйста, введите настоящее название места.",
+    invalidPeople: "❌ Введите число (1-50).\n_Например: 7 или 12_",
+    invalidChildrenCount: "❌ Введите количество детей цифрой (1-50).",
+    invalidChildrenMath: "❌ Количество детей должно быть меньше общего количества человек!\nВы указали {p} человек, детей не может быть {c}.",
+    blocked: "❌ Вы заблокированы.",
+    botInactive: "Бот временно не работает. Пожалуйста, попробуйте позже.",
+    g_name: "👤 Имя",
+    g_destination: "📍 Направление",
+    g_date: "📅 Дата",
+    g_people: "👥 Количество человек",
+    g_children: "👶 Дети",
+    g_childrenYes: "Есть",
+    g_childrenNo: "Нет",
+    g_childrenAges: "возраст",
+    g_contactTime: "📞 Время для связи",
+    g_phone: "📱 Телефон",
+    g_username: "👨‍💻 Username",
+    g_newRequest: "🆕 НОВАЯ ЗАЯВКА",
+  }
+};
+
+function t(lang, key) {
+  const override = dbApi.getTextOverride(lang, key);
+  if (override !== null) return override;
+  const l = defaultLocales[lang] || defaultLocales.uz;
+  return l[key] || defaultLocales.uz[key] || key;
+}
+
+function getAllKeys() {
+  return Object.keys(defaultLocales.uz);
+}
+
+function getDefault(lang, key) {
+  return (defaultLocales[lang] || defaultLocales.uz)[key] || '';
+}
+
+module.exports = { t, getAllKeys, getDefault, defaultLocales };
