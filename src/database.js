@@ -103,7 +103,7 @@ function seedContactTimes() {
 
 function seedManagers() {
   // Yangi to'g'ri ro'yxat — bot ishga tushganda sinxronlanadi
-  const desired = ['Jaloliddin', 'Sitora', 'Shohjahon', 'Sardor', 'Timur'];
+  const desired = []; // Test uchun menejerlar olib tashlandi — keyinroq qo'shiladi
   const current = db.prepare('SELECT name FROM managers ORDER BY sort_order ASC, id ASC').all().map(r => r.name);
   const same = current.length === desired.length && current.every((n, i) => n === desired[i]);
   if (!same) {
