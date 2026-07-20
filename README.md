@@ -1,4 +1,4 @@
-# ORBIS TOUR Bot
+# Mir Sun Travel Bot
 
 Telegram bot — turistik so'rovlarni qabul qilish va menejerlar guruhiga yuborish.
 

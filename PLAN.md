@@ -1,6 +1,6 @@
 # Loyihani Amalga Oshirish Rejasi (PLAN)
 
-Ushbu hujjat ORBIS TOUR botini yaratish bo'yicha qadam-baqadam ko'rsatmalarni o'z ichiga oladi. Claude yordamida loyihani qurishda shu qadamlarga amal qilinadi.
+Ushbu hujjat Mir Sun Travel botini yaratish bo'yicha qadam-baqadam ko'rsatmalarni o'z ichiga oladi. Claude yordamida loyihani qurishda shu qadamlarga amal qilinadi.
 
 ## 1-qadam: Loyihani initsializatsiya qilish
 1. Node.js o'rnatilganligiga ishonch hosil qilish.

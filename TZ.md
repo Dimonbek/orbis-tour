@@ -1,7 +1,7 @@
-# Texnik Topshiriq (TZ) - ORBIS TOUR Bot
+# Texnik Topshiriq (TZ) - Mir Sun Travel Bot
 
 ## 1. Loyiha maqsadi
-"ORBIS TOUR" turistik kompaniyasi uchun mijozlardan sayohatga oid birlamchi ma'lumotlarni yig'uvchi va yig'ilgan ma'lumotlarni menejerlar guruhiga yuboruvchi Telegram bot yaratish.
+"Mir Sun Travel" turistik kompaniyasi uchun mijozlardan sayohatga oid birlamchi ma'lumotlarni yig'uvchi va yig'ilgan ma'lumotlarni menejerlar guruhiga yuboruvchi Telegram bot yaratish.
 
 ## 2. Funksional talablar
 

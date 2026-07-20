@@ -3,7 +3,7 @@ const { dbApi } = require('./database');
 const defaultLocales = {
   uz: {
     chooseLanguage: "🌐 Tilni tanlang / Выберите язык:",
-    welcome: "Assalomu alaykum! 👋\n\n\"ORBIS TOUR\" botiga xush kelibsiz.\n\nSizga eng yaxshi sayohatni tashkil etish uchun bir necha savol beramiz.",
+    welcome: "Assalomu alaykum! 👋\n\n\"Mir Sun Travel\" botiga xush kelibsiz.\n\nSizga eng yaxshi sayohatni tashkil etish uchun bir necha savol beramiz.",
     askName: "👤 Ism va familiyangizni kiriting:\n_Masalan: Akmal Karimov_",
     askDestination: "📍 Qayerga uchmoqchisiz?\n_Tour paketdan birini tanlang yoki \"Boshqa shahar\"._",
     askCustomDestination: "📍 Shahar yoki davlat nomini yozing:\n_Masalan: Misr, Ispaniya, Italiya_",
@@ -59,7 +59,7 @@ const defaultLocales = {
   },
   ru: {
     chooseLanguage: "🌐 Tilni tanlang / Выберите язык:",
-    welcome: "Здравствуйте! 👋\n\nДобро пожаловать в бот \"ORBIS TOUR\".\n\nМы зададим несколько вопросов, чтобы организовать для вас лучшее путешествие.",
+    welcome: "Здравствуйте! 👋\n\nДобро пожаловать в бот \"Mir Sun Travel\".\n\nМы зададим несколько вопросов, чтобы организовать для вас лучшее путешествие.",
     askName: "👤 Введите ваше имя и фамилию:\n_Например: Акмал Каримов_",
     askDestination: "📍 Куда хотите полететь?\n_Выберите тур или нажмите \"Другой город\"._",
     askCustomDestination: "📍 Введите название города или страны:\n_Например: Египет, Испания, Италия_",

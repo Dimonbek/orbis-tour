@@ -40,10 +40,10 @@ git add .
 git commit -m "Initial commit"
 ```
 
-GitHub'da yangi **private** repository yarating (masalan: `orbis-tour-bot`), keyin:
+GitHub'da yangi **private** repository yarating (masalan: `mirsuntravel-bot`), keyin:
 
 ```bash
-git remote add origin https://github.com/SIZNING_USERNAME/orbis-tour-bot.git
+git remote add origin https://github.com/SIZNING_USERNAME/mirsuntravel-bot.git
 git branch -M main
 git push -u origin main
 ```
@@ -91,17 +91,17 @@ To'liq nazorat kerak bo'lsa:
    ```bash
    curl -fsSL https://deb.nodesource.com/setup_20.x | bash -
    apt install -y nodejs git build-essential
-   git clone https://github.com/SIZNING_USERNAME/orbis-tour-bot.git
-   cd orbis-tour-bot
+   git clone https://github.com/SIZNING_USERNAME/mirsuntravel-bot.git
+   cd mirsuntravel-bot
    npm install
    nano .env  # token va ID larni yozing
    npm install -g pm2
-   pm2 start index.js --name orbis-bot
+   pm2 start index.js --name mirsuntravel-bot
    pm2 save
    pm2 startup
    ```
 
-3. `pm2 logs orbis-bot` — loglarni ko'rish
+3. `pm2 logs mirsuntravel-bot` — loglarni ko'rish
 
 ---
 

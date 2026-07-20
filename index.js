@@ -149,7 +149,7 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 
 app.get('/', (req, res) => {
-  res.send('Bot is running! ORBIS TOUR Bot — ' + new Date().toISOString());
+  res.send('Bot is running! Mir Sun Travel Bot — ' + new Date().toISOString());
 });
 app.get('/health', (req, res) => {
   res.json({ status: 'ok', uptime: process.uptime() });

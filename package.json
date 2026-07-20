@@ -1,7 +1,7 @@
 {
-  "name": "orbis-tour-bot",
+  "name": "mirsuntravel-bot",
   "version": "1.0.0",
-  "description": "ORBIS TOUR - Telegram bot for collecting tour requests",
+  "description": "Mir Sun Travel - Telegram bot for collecting tour requests",
   "main": "index.js",
   "scripts": {
     "start": "node index.js",
