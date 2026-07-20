@@ -79,8 +79,10 @@ db.exec(`
   );
 `);
 
-// Manager ustunini eski jadvalga qo'shish (agar bo'lmasa)
+// Eski jadvalga yangi ustunlarni qo'shish (agar bo'lmasa).
+// Mavjud yozuvlarda NULL bo'lib qoladi — ma'lumot yo'qolmaydi.
 try { db.exec('ALTER TABLE surveys ADD COLUMN manager TEXT'); } catch (e) {}
+try { db.exec('ALTER TABLE surveys ADD COLUMN campaign_code TEXT'); } catch (e) {}
 
 function seedAdmins() {
   const superAdmin = parseInt(process.env.SUPER_ADMIN_ID);
@@ -180,12 +182,13 @@ const dbApi = {
 
   saveSurvey(data) {
     return db.prepare(`
-      INSERT INTO surveys (telegram_id, full_name, destination, travel_date, people_count, has_children, children_count, children_ages, contact_time, phone, manager, language)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      INSERT INTO surveys (telegram_id, full_name, destination, travel_date, people_count, has_children, children_count, children_ages, contact_time, phone, manager, campaign_code, language)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `).run(
       data.telegram_id, data.full_name || null, data.destination, data.travel_date,
       data.people_count, data.has_children ? 1 : 0, data.children_count || null,
-      data.children_ages || null, data.contact_time, data.phone, data.manager || null, data.language
+      data.children_ages || null, data.contact_time, data.phone, data.manager || null,
+      data.campaign_code || null, data.language
     );
   },
   getAllSurveys() {
@@ -207,6 +210,7 @@ const dbApi = {
       times: db.prepare('SELECT contact_time, COUNT(*) as c FROM surveys GROUP BY contact_time ORDER BY c DESC').all(),
       languages: db.prepare('SELECT language, COUNT(*) as c FROM surveys GROUP BY language').all(),
       managers: db.prepare('SELECT manager, COUNT(*) as c FROM surveys WHERE manager IS NOT NULL GROUP BY manager ORDER BY c DESC').all(),
+      campaigns: db.prepare('SELECT campaign_code, COUNT(*) as c FROM surveys WHERE campaign_code IS NOT NULL GROUP BY campaign_code ORDER BY c DESC LIMIT 10').all(),
       totalUsers: db.prepare('SELECT COUNT(*) as c FROM users').get().c,
       blockedUsers: db.prepare('SELECT COUNT(*) as c FROM users WHERE is_blocked = 1').get().c,
     };
@@ -227,6 +231,7 @@ const dbApi = {
       times: q('SELECT contact_time, COUNT(*) as c FROM surveys WHERE created_at >= ? AND created_at < ? GROUP BY contact_time ORDER BY c DESC'),
       languages: q('SELECT language, COUNT(*) as c FROM surveys WHERE created_at >= ? AND created_at < ? GROUP BY language'),
       managers: q('SELECT manager, COUNT(*) as c FROM surveys WHERE created_at >= ? AND created_at < ? AND manager IS NOT NULL GROUP BY manager ORDER BY c DESC'),
+      campaigns: q('SELECT campaign_code, COUNT(*) as c FROM surveys WHERE created_at >= ? AND created_at < ? AND campaign_code IS NOT NULL GROUP BY campaign_code ORDER BY c DESC'),
       withChildren: db.prepare('SELECT COUNT(*) as c FROM surveys WHERE created_at >= ? AND created_at < ? AND has_children = 1').get(start, end).c,
       newUsers: db.prepare('SELECT COUNT(*) as c FROM users WHERE created_at >= ? AND created_at < ?').get(start, end).c,
     };

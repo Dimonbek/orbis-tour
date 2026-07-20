@@ -73,6 +73,14 @@ function buildStatsText(range) {
     s.managers.forEach(m => lines.push('  • ' + m.manager + ' — ' + m.c));
   }
 
+  if (s.campaigns.length) {
+    const fromCampaign = s.campaigns.reduce((sum, c) => sum + c.c, 0);
+    lines.push('');
+    lines.push('📣 Reklama kampaniyalari:');
+    s.campaigns.forEach(c => lines.push('  • ' + c.campaign_code + ' — ' + c.c));
+    lines.push('  • (havolasiz) — ' + (s.total - fromCampaign));
+  }
+
   return lines.join('\n');
 }
 
@@ -95,6 +103,7 @@ async function buildExcel(surveys, filename) {
     { header: "Bog'lanish vaqti", key: 'contact_time', width: 20 },
     { header: 'Telefon', key: 'phone', width: 18 },
     { header: 'Menejer', key: 'manager', width: 18 },
+    { header: 'Kampaniya', key: 'campaign_code', width: 16 },
     { header: 'Til', key: 'language', width: 6 },
     { header: 'Sana/Vaqt (UTC)', key: 'created_at', width: 20 },
   ];

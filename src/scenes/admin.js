@@ -164,6 +164,16 @@ admin.action('a:stats', async (ctx) => {
   if (s.languages.length) {
     msg += `🌐 *Tillar:*\n`;
     s.languages.forEach(l => { msg += `• ${l.language}: ${l.c}\n`; });
+    msg += '\n';
+  }
+  if (s.managers.length) {
+    msg += `👨‍💼 *Menejerlar:*\n`;
+    s.managers.forEach(m => { msg += `• ${m.manager}: ${m.c}\n`; });
+    msg += '\n';
+  }
+  if (s.campaigns.length) {
+    msg += `📣 *Reklama kampaniyalari:*\n`;
+    s.campaigns.forEach(c => { msg += `• ${c.campaign_code}: ${c.c}\n`; });
   }
   await editOrReply(ctx, msg, backKb());
 });
@@ -189,6 +199,8 @@ admin.action('a:export', async (ctx) => {
     { header: 'Yoshlari', key: 'children_ages', width: 15 },
     { header: "Bog'lanish vaqti", key: 'contact_time', width: 20 },
     { header: 'Telefon', key: 'phone', width: 18 },
+    { header: 'Menejer', key: 'manager', width: 18 },
+    { header: 'Kampaniya', key: 'campaign_code', width: 16 },
     { header: 'Til', key: 'language', width: 6 },
     { header: 'Sana/Vaqt', key: 'created_at', width: 20 },
   ];
