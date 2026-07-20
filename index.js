@@ -196,16 +196,17 @@ async function startBot() {
     });
 
     await new Promise(r => setTimeout(r, 3000));
-    try {
-      await bot.launch({ dropPendingUpdates: true });
-      await setBotCommands();
-      console.log('✅ POLLING rejimida ishga tushdi');
-      console.log('Guruh ID:', dbApi.getSetting('group_id') || process.env.GROUP_ID);
-      console.log('Super Admin:', process.env.SUPER_ADMIN_ID);
-    } catch (err) {
+    // DIQQAT: Telegraf 4.12+ da launch() promise'i bot to'xtaguncha hal bo'lmaydi.
+    // Shuning uchun await qilinmaydi — aks holda keyingi qatorlar ishlamaydi.
+    bot.launch({ dropPendingUpdates: true }).catch(err => {
       console.error('Bot launch xato:', err.message);
       setTimeout(() => startBot().catch(e => console.error(e.message)), 30000);
-    }
+    });
+
+    await setBotCommands();
+    console.log('✅ POLLING rejimida ishga tushdi');
+    console.log('Guruh ID:', dbApi.getSetting('group_id') || process.env.GROUP_ID);
+    console.log('Super Admin:', process.env.SUPER_ADMIN_ID);
   }
 }
 
