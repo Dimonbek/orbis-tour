@@ -6,6 +6,7 @@ const { t } = require('./src/locales');
 const { survey, SURVEY_SCENE } = require('./src/scenes/survey');
 const { admin, ADMIN_SCENE } = require('./src/scenes/admin');
 const kb = require('./src/keyboards');
+const { crmStatus } = require('./src/crm');
 const report = require('./src/report');
 
 if (!process.env.BOT_TOKEN) {
@@ -69,7 +70,10 @@ bot.use(async (ctx, next) => {
 
 bot.command('start', async (ctx) => {
   if (ctx.chat.type !== 'private') return;
+  // Reklama havolasi: t.me/bot?start=insta_iyul
+  const payload = (ctx.message && ctx.message.text || '').split(/\s+/)[1];
   if (ctx.session) {
+    ctx.session.campaignCode = payload ? payload.trim().slice(0, 40) : null;
     ctx.session.surveyData = {};
     ctx.session.state = null;
   }
@@ -186,6 +190,7 @@ async function startBot() {
         console.log('✅ WEBHOOK rejimida ishga tushdi:', publicUrl + secretPath);
         console.log('Guruh ID:', dbApi.getSetting('group_id') || process.env.GROUP_ID);
         console.log('Super Admin:', process.env.SUPER_ADMIN_ID);
+        console.log('CRM integratsiya:', crmStatus());
       } catch (err) {
         console.error('setWebhook xato:', err.message);
       }
@@ -200,6 +205,7 @@ async function startBot() {
     await setBotCommands();
     console.log('Guruh ID:', dbApi.getSetting('group_id') || process.env.GROUP_ID);
     console.log('Super Admin:', process.env.SUPER_ADMIN_ID);
+    console.log('CRM integratsiya:', crmStatus());
   }
 
   report.startScheduler(bot.telegram);

@@ -2,6 +2,7 @@ const { Scenes } = require('telegraf');
 const { t } = require('../locales');
 const { dbApi } = require('../database');
 const kb = require('../keyboards');
+const { sendToCrm } = require('../crm');
 
 const SURVEY_SCENE = 'survey';
 
@@ -377,10 +378,14 @@ async function finishSurvey(ctx) {
   const lang = ctx.session.lang || 'uz';
   ctx.session.surveyData.telegram_id = ctx.from.id;
   ctx.session.surveyData.language = lang;
+  // Qaysi reklamadan kelgani (t.me/bot?start=<kod>)
+  ctx.session.surveyData.campaign_code = ctx.session.campaignCode || null;
   const manager = dbApi.getNextManager();
   ctx.session.surveyData.manager = manager;
   try { dbApi.saveSurvey(ctx.session.surveyData); } catch (e) { console.error('DB:', e); }
   await sendToGroup(ctx, ctx.session.surveyData);
+  // CRM ga yuborish — bloklamaydi, xatolik bot oqimiga ta'sir qilmaydi
+  sendToCrm(ctx, ctx.session.surveyData).catch((e) => console.error('CRM:', e.message));
   await ctx.reply(t(lang, 'finish'), kb.removeReply());
   return ctx.scene.leave();
 }
