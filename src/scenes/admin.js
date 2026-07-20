@@ -11,6 +11,7 @@ const ADMIN_SCENE = 'admin';
 function mainMenuKb(isSuper) {
   const rows = [
     [Markup.button.callback('📊 Statistika', 'a:stats'), Markup.button.callback('📥 Eksport (Excel)', 'a:export')],
+    [Markup.button.callback('📅 Oylik hisobotni guruhga yuborish', 'a:monthly')],
     [Markup.button.callback('📢 Broadcast', 'a:broadcast'), Markup.button.callback('✏️ Matnlar', 'a:texts')],
     [Markup.button.callback("🕐 Bog'lanish vaqtlari", 'a:times')],
     [Markup.button.callback('🚫 Bloklangan foydalanuvchilar', 'a:blocked')],
@@ -201,6 +202,23 @@ admin.action('a:export', async (ctx) => {
   await ctx.replyWithDocument({ source: filePath, filename: 'surveys.xlsx' });
   setTimeout(() => { try { fs.unlinkSync(filePath); } catch (e) {} }, 5000);
   await ctx.reply('✅ Eksport tayyor.', backKb());
+});
+
+// ============ OYLIK HISOBOT (qo'lda) ============
+admin.action('a:monthly', async (ctx) => {
+  await ctx.answerCbQuery('Tayyorlanmoqda...');
+  const report = require('../report');
+  const range = report.previousMonth(dbApi.tashkentNow());
+  try {
+    const ok = await report.sendMonthlyReport(ctx.telegram, range);
+    if (!ok) {
+      return editOrReply(ctx, "❌ Guruh ID sozlanmagan.", backKb());
+    }
+    await editOrReply(ctx, '✅ ' + range.label + ' hisoboti guruhga yuborildi.', backKb());
+  } catch (e) {
+    console.error('Qo\'lda hisobot xato:', e.message);
+    await editOrReply(ctx, '❌ Xato: ' + e.message, backKb());
+  }
 });
 
 // ============ BROADCAST ============

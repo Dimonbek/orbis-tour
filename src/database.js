@@ -123,7 +123,25 @@ function seedSettings() {
   insert.run('manager_counter', '0');
 }
 
+// ============ VAQT YORDAMCHILARI ============
+// Server UTC da ishlaydi, biz esa Toshkent vaqtida hisoblaymiz (UTC+5, DST yo'q).
+const TZ_OFFSET_MIN = parseInt(process.env.TZ_OFFSET_MINUTES || '300');
+
+// Hozirgi Toshkent vaqti — UTC maydonlari Toshkent devor-soatini bildiradi
+function tashkentNow() {
+  return new Date(Date.now() + TZ_OFFSET_MIN * 60000);
+}
+
+// Toshkent sana/vaqtini SQLite created_at formatiga (UTC) o'giradi
+function sqlUtc(year, month, day, hour = 0) {
+  const ms = Date.UTC(year, month, day, hour) - TZ_OFFSET_MIN * 60000;
+  return new Date(ms).toISOString().slice(0, 19).replace('T', ' ');
+}
+
 const dbApi = {
+  tashkentNow,
+  sqlUtc,
+
   upsertUser(user) {
     db.prepare(`
       INSERT INTO users (telegram_id, username, first_name, language)
@@ -174,10 +192,12 @@ const dbApi = {
     return db.prepare('SELECT * FROM surveys ORDER BY created_at DESC').all();
   },
   getStats() {
-    const now = new Date();
-    const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate()).toISOString();
-    const weekStart = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000).toISOString();
-    const monthStart = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
+    // DIQQAT: created_at SQLite formatida — "YYYY-MM-DD HH:MM:SS" (UTC).
+    // toISOString() ishlatilsa "T" ajratuvchisi tufayli taqqoslash buziladi.
+    const tz = tashkentNow();
+    const todayStart = sqlUtc(tz.getUTCFullYear(), tz.getUTCMonth(), tz.getUTCDate());
+    const weekStart = sqlUtc(tz.getUTCFullYear(), tz.getUTCMonth(), tz.getUTCDate() - 6);
+    const monthStart = sqlUtc(tz.getUTCFullYear(), tz.getUTCMonth(), 1);
     return {
       total: db.prepare('SELECT COUNT(*) as c FROM surveys').get().c,
       today: db.prepare("SELECT COUNT(*) as c FROM surveys WHERE created_at >= ?").get(todayStart).c,
@@ -189,6 +209,26 @@ const dbApi = {
       managers: db.prepare('SELECT manager, COUNT(*) as c FROM surveys WHERE manager IS NOT NULL GROUP BY manager ORDER BY c DESC').all(),
       totalUsers: db.prepare('SELECT COUNT(*) as c FROM users').get().c,
       blockedUsers: db.prepare('SELECT COUNT(*) as c FROM users WHERE is_blocked = 1').get().c,
+    };
+  },
+
+  // ============ DAVR BO'YICHA (oylik hisobot uchun) ============
+  // start/end — sqlUtc() formatida, [start, end) oralig'i
+  getSurveysBetween(start, end) {
+    return db.prepare(
+      'SELECT * FROM surveys WHERE created_at >= ? AND created_at < ? ORDER BY created_at ASC'
+    ).all(start, end);
+  },
+  getStatsBetween(start, end) {
+    const q = (sql) => db.prepare(sql).all(start, end);
+    return {
+      total: db.prepare('SELECT COUNT(*) as c FROM surveys WHERE created_at >= ? AND created_at < ?').get(start, end).c,
+      destinations: q('SELECT destination, COUNT(*) as c FROM surveys WHERE created_at >= ? AND created_at < ? GROUP BY destination ORDER BY c DESC LIMIT 10'),
+      times: q('SELECT contact_time, COUNT(*) as c FROM surveys WHERE created_at >= ? AND created_at < ? GROUP BY contact_time ORDER BY c DESC'),
+      languages: q('SELECT language, COUNT(*) as c FROM surveys WHERE created_at >= ? AND created_at < ? GROUP BY language'),
+      managers: q('SELECT manager, COUNT(*) as c FROM surveys WHERE created_at >= ? AND created_at < ? AND manager IS NOT NULL GROUP BY manager ORDER BY c DESC'),
+      withChildren: db.prepare('SELECT COUNT(*) as c FROM surveys WHERE created_at >= ? AND created_at < ? AND has_children = 1').get(start, end).c,
+      newUsers: db.prepare('SELECT COUNT(*) as c FROM users WHERE created_at >= ? AND created_at < ?').get(start, end).c,
     };
   },
 

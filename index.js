@@ -6,6 +6,7 @@ const { t } = require('./src/locales');
 const { survey, SURVEY_SCENE } = require('./src/scenes/survey');
 const { admin, ADMIN_SCENE } = require('./src/scenes/admin');
 const kb = require('./src/keyboards');
+const report = require('./src/report');
 
 if (!process.env.BOT_TOKEN) {
   console.error('XATO: BOT_TOKEN .env faylda topilmadi!');
@@ -200,6 +201,8 @@ async function startBot() {
     console.log('Guruh ID:', dbApi.getSetting('group_id') || process.env.GROUP_ID);
     console.log('Super Admin:', process.env.SUPER_ADMIN_ID);
   }
+
+  report.startScheduler(bot.telegram);
 }
 
 // HTTP portni faqat bir marta ochish — qayta urinishda EADDRINUSE bo'lmasligi uchun
