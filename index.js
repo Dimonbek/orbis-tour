@@ -191,23 +191,43 @@ async function startBot() {
     });
   } else {
     // POLLING rejimi (lokal yoki URL yo'q)
-    app.listen(PORT, () => {
-      console.log('HTTP server (polling) port:', PORT);
-    });
+    listenOnce('polling');
 
     await new Promise(r => setTimeout(r, 3000));
-    // DIQQAT: Telegraf 4.12+ da launch() promise'i bot to'xtaguncha hal bo'lmaydi.
-    // Shuning uchun await qilinmaydi — aks holda keyingi qatorlar ishlamaydi.
-    bot.launch({ dropPendingUpdates: true }).catch(err => {
-      console.error('Bot launch xato:', err.message);
-      setTimeout(() => startBot().catch(e => console.error(e.message)), 30000);
-    });
+    launchPolling();
 
     await setBotCommands();
-    console.log('✅ POLLING rejimida ishga tushdi');
     console.log('Guruh ID:', dbApi.getSetting('group_id') || process.env.GROUP_ID);
     console.log('Super Admin:', process.env.SUPER_ADMIN_ID);
   }
+}
+
+// HTTP portni faqat bir marta ochish — qayta urinishda EADDRINUSE bo'lmasligi uchun
+let httpStarted = false;
+function listenOnce(mode) {
+  if (httpStarted) return;
+  httpStarted = true;
+  const server = app.listen(PORT, () => {
+    console.log('HTTP server (' + mode + ') port:', PORT);
+  });
+  server.on('error', (err) => {
+    console.error('HTTP server xato:', err.message);
+  });
+}
+
+// 409 Conflict (eski konteyner hali getUpdates qilayotgan bo'lsa) — faqat
+// botni qayta ishga tushiramiz, butun startBot() ni emas.
+function launchPolling() {
+  // DIQQAT: Telegraf 4.12+ da launch() promise'i bot to'xtaguncha hal bo'lmaydi.
+  // Shuning uchun await qilinmaydi — aks holda keyingi qatorlar ishlamaydi.
+  bot.launch({ dropPendingUpdates: true })
+    .then(() => console.log('Bot polling to\'xtadi'))
+    .catch(err => {
+      console.error('Bot launch xato:', err.message);
+      console.log('15 soniyadan keyin qayta urinaman...');
+      setTimeout(launchPolling, 15000);
+    });
+  console.log('✅ POLLING rejimida ishga tushdi');
 }
 
 startBot();
