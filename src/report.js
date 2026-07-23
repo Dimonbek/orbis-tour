@@ -11,6 +11,13 @@ const MONTHS_UZ = [
 // Hisobot yuboriladigan Toshkent vaqti (oyning 1-sanasi)
 const REPORT_HOUR = 9;
 
+// Bazada 'naqd'/'nasiya' saqlanadi — hisobot va Excel uchun o'zbekcha nom
+function paymentLabel(key) {
+  if (key === 'naqd') return 'Naqd';
+  if (key === 'nasiya') return 'Nasiya';
+  return key || '—';
+}
+
 // ============ OY CHEGARALARI ============
 // year/month (0-11) uchun [start, end) — sqlUtc formatida
 function monthRange(year, month) {
@@ -51,6 +58,18 @@ function buildStatsText(range) {
     s.destinations.forEach((d, i) => {
       lines.push('  ' + (i + 1) + '. ' + (d.destination || '—') + ' — ' + d.c);
     });
+  }
+
+  if (s.stars.length) {
+    lines.push('');
+    lines.push('🏨 Mehmonxona yulduzi:');
+    s.stars.forEach(x => lines.push('  • ' + x.hotel_stars + '⭐ — ' + x.c));
+  }
+
+  if (s.payments.length) {
+    lines.push('');
+    lines.push("💳 To'lov turi:");
+    s.payments.forEach(p => lines.push('  • ' + paymentLabel(p.payment_type) + ' — ' + p.c));
   }
 
   if (s.times.length) {
@@ -95,11 +114,13 @@ async function buildExcel(surveys, filename) {
     { header: 'Telegram ID', key: 'telegram_id', width: 14 },
     { header: 'Ism', key: 'full_name', width: 25 },
     { header: "Yo'nalish", key: 'destination', width: 20 },
+    { header: 'Mehmonxona', key: 'hotel_stars', width: 12 },
     { header: 'Sana', key: 'travel_date', width: 15 },
     { header: 'Odam soni', key: 'people_count', width: 12 },
     { header: 'Bolalar', key: 'has_children', width: 10 },
     { header: 'Bolalar soni', key: 'children_count', width: 12 },
     { header: 'Yoshlari', key: 'children_ages', width: 15 },
+    { header: "To'lov turi", key: 'payment_type', width: 12 },
     { header: "Bog'lanish vaqti", key: 'contact_time', width: 20 },
     { header: 'Telefon', key: 'phone', width: 18 },
     { header: 'Menejer', key: 'manager', width: 18 },
@@ -108,7 +129,12 @@ async function buildExcel(surveys, filename) {
     { header: 'Sana/Vaqt (UTC)', key: 'created_at', width: 20 },
   ];
   ws.getRow(1).font = { bold: true };
-  surveys.forEach(s => ws.addRow({ ...s, has_children: s.has_children ? 'Ha' : "Yo'q" }));
+  surveys.forEach(s => ws.addRow({
+    ...s,
+    has_children: s.has_children ? 'Ha' : "Yo'q",
+    hotel_stars: s.hotel_stars ? s.hotel_stars + '⭐' : '',
+    payment_type: s.payment_type ? paymentLabel(s.payment_type) : '',
+  }));
 
   const exportDir = path.join(__dirname, '..', 'exports');
   if (!fs.existsSync(exportDir)) fs.mkdirSync(exportDir, { recursive: true });
@@ -190,5 +216,6 @@ module.exports = {
   buildExcel,
   monthRange,
   previousMonth,
+  paymentLabel,
   MONTHS_UZ,
 };

@@ -1,9 +1,8 @@
 const { Scenes, Markup } = require('telegraf');
-const ExcelJS = require('exceljs');
-const path = require('path');
 const fs = require('fs');
 const { dbApi } = require('../database');
 const { getAllKeys, getDefault } = require('../locales');
+const report = require('../report');
 
 const ADMIN_SCENE = 'admin';
 
@@ -156,6 +155,16 @@ admin.action('a:stats', async (ctx) => {
     s.destinations.forEach((d, i) => { msg += `${i + 1}. ${d.destination} — ${d.c}\n`; });
     msg += '\n';
   }
+  if (s.stars.length) {
+    msg += `🏨 *Mehmonxona yulduzi:*\n`;
+    s.stars.forEach(x => { msg += `• ${x.hotel_stars}⭐ — ${x.c}\n`; });
+    msg += '\n';
+  }
+  if (s.payments.length) {
+    msg += `💳 *To'lov turi:*\n`;
+    s.payments.forEach(p => { msg += `• ${report.paymentLabel(p.payment_type)} — ${p.c}\n`; });
+    msg += '\n';
+  }
   if (s.times.length) {
     msg += `🕐 *Bog'lanish vaqtlari:*\n`;
     s.times.forEach(x => { msg += `• ${x.contact_time}: ${x.c}\n`; });
@@ -185,32 +194,8 @@ admin.action('a:export', async (ctx) => {
   if (!surveys.length) {
     return editOrReply(ctx, "❌ Hali so'rovlar yo'q.", backKb());
   }
-  const wb = new ExcelJS.Workbook();
-  const ws = wb.addWorksheet('Surveys');
-  ws.columns = [
-    { header: 'ID', key: 'id', width: 6 },
-    { header: 'Telegram ID', key: 'telegram_id', width: 14 },
-    { header: 'Ism', key: 'full_name', width: 25 },
-    { header: "Yo'nalish", key: 'destination', width: 20 },
-    { header: 'Sana', key: 'travel_date', width: 15 },
-    { header: 'Odam soni', key: 'people_count', width: 12 },
-    { header: 'Bolalar', key: 'has_children', width: 10 },
-    { header: 'Bolalar soni', key: 'children_count', width: 12 },
-    { header: 'Yoshlari', key: 'children_ages', width: 15 },
-    { header: "Bog'lanish vaqti", key: 'contact_time', width: 20 },
-    { header: 'Telefon', key: 'phone', width: 18 },
-    { header: 'Menejer', key: 'manager', width: 18 },
-    { header: 'Kampaniya', key: 'campaign_code', width: 16 },
-    { header: 'Til', key: 'language', width: 6 },
-    { header: 'Sana/Vaqt', key: 'created_at', width: 20 },
-  ];
-  ws.getRow(1).font = { bold: true };
-  surveys.forEach(s => ws.addRow({ ...s, has_children: s.has_children ? 'Ha' : "Yo'q" }));
-
-  const exportDir = path.join(__dirname, '..', '..', 'exports');
-  if (!fs.existsSync(exportDir)) fs.mkdirSync(exportDir, { recursive: true });
-  const filePath = path.join(exportDir, `surveys_${Date.now()}.xlsx`);
-  await wb.xlsx.writeFile(filePath);
+  // Ustunlar hisobotdagi bekap bilan bir xil — report.buildExcel dan foydalanamiz
+  const filePath = await report.buildExcel(surveys, `surveys_${Date.now()}.xlsx`);
   await ctx.replyWithDocument({ source: filePath, filename: 'surveys.xlsx' });
   setTimeout(() => { try { fs.unlinkSync(filePath); } catch (e) {} }, 5000);
   await ctx.reply('✅ Eksport tayyor.', backKb());
@@ -219,7 +204,6 @@ admin.action('a:export', async (ctx) => {
 // ============ OYLIK HISOBOT (qo'lda) ============
 admin.action('a:monthly', async (ctx) => {
   await ctx.answerCbQuery('Tayyorlanmoqda...');
-  const report = require('../report');
   const range = report.previousMonth(dbApi.tashkentNow());
   try {
     const ok = await report.sendMonthlyReport(ctx.telegram, range);

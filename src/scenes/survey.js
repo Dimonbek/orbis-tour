@@ -11,12 +11,14 @@ const S = {
   ASK_PHONE: 'ask_phone',
   ASK_DEST: 'ask_dest',
   ASK_CUSTOM_DEST: 'ask_custom_dest',
+  ASK_STARS: 'ask_stars',
   ASK_DATE: 'ask_date',
   ASK_PEOPLE: 'ask_people',
   ASK_PEOPLE_CUSTOM: 'ask_people_custom',
   ASK_CHILDREN: 'ask_children',
   ASK_CHILDREN_COUNT: 'ask_children_count',
   ASK_CHILD_AGE: 'ask_child_age',
+  ASK_PAYMENT: 'ask_payment',
   ASK_TIME: 'ask_time',
 };
 
@@ -25,15 +27,29 @@ function previousState(state, hasChildren) {
     case S.ASK_PHONE: return null;
     case S.ASK_DEST: return S.ASK_PHONE;
     case S.ASK_CUSTOM_DEST: return S.ASK_DEST;
-    case S.ASK_DATE: return S.ASK_DEST;
+    case S.ASK_STARS: return S.ASK_DEST;
+    case S.ASK_DATE: return S.ASK_STARS;
     case S.ASK_PEOPLE: return S.ASK_DATE;
     case S.ASK_PEOPLE_CUSTOM: return S.ASK_PEOPLE;
     case S.ASK_CHILDREN: return S.ASK_PEOPLE;
     case S.ASK_CHILDREN_COUNT: return S.ASK_CHILDREN;
     case S.ASK_CHILD_AGE: return S.ASK_CHILDREN_COUNT;
-    case S.ASK_TIME: return hasChildren ? S.ASK_CHILD_AGE : S.ASK_CHILDREN;
+    case S.ASK_PAYMENT: return hasChildren ? S.ASK_CHILD_AGE : S.ASK_CHILDREN;
+    case S.ASK_TIME: return S.ASK_PAYMENT;
     default: return null;
   }
+}
+
+// Bazada o'zgarmas kod saqlanadi ('3'/'4'/'5', 'naqd'/'nasiya') —
+// ko'rsatishda foydalanuvchi tiliga o'giriladi.
+function starsText(lang, stars) {
+  const opt = kb.STAR_OPTIONS.find(o => o.key === String(stars));
+  return opt ? t(lang, opt.tKey) : String(stars);
+}
+
+function paymentText(lang, key) {
+  const opt = kb.PAYMENT_OPTIONS.find(o => o.key === key);
+  return opt ? t(lang, opt.tKey) : String(key);
 }
 
 function isValidDestination(text) {
@@ -89,6 +105,9 @@ async function promptState(ctx, state) {
     case S.ASK_CUSTOM_DEST:
       sent = await ctx.reply(t(lang, 'askCustomDestination'), { ...opts, ...kb.backInline(lang) });
       break;
+    case S.ASK_STARS:
+      sent = await ctx.reply(t(lang, 'askHotelStars'), kb.hotelStarsInline(lang));
+      break;
     case S.ASK_DATE:
       sent = await ctx.reply(t(lang, 'askDate'), kb.datesInline(lang));
       break;
@@ -111,6 +130,9 @@ async function promptState(ctx, state) {
       sent = await ctx.reply(msg, kb.childAgeInline(lang));
       break;
     }
+    case S.ASK_PAYMENT:
+      sent = await ctx.reply(t(lang, 'askPaymentType'), kb.paymentInline(lang));
+      break;
     case S.ASK_TIME:
       sent = await ctx.reply(t(lang, 'askContactTime'), kb.contactTimesInline(lang));
       break;
@@ -167,6 +189,8 @@ survey.action('back', async (ctx) => {
   const data = ctx.session.surveyData || {};
   if (currentState === S.ASK_DEST || currentState === S.ASK_CUSTOM_DEST) {
     delete data.destination;
+  } else if (currentState === S.ASK_STARS) {
+    delete data.hotel_stars;
   } else if (currentState === S.ASK_DATE) {
     delete data.travel_date;
   } else if (currentState === S.ASK_PEOPLE || currentState === S.ASK_PEOPLE_CUSTOM) {
@@ -186,6 +210,15 @@ survey.action('back', async (ctx) => {
       ctx.session.currentChild = 0;
       ctx.session.childAges = [];
     }
+  } else if (currentState === S.ASK_PAYMENT) {
+    delete data.payment_type;
+    // Bolalar yoshiga qaytilsa — oxirgi javobni olib tashlaymiz, aks holda
+    // qayta tanlanganda ro'yxatga ortiqcha yosh qo'shilib ketadi.
+    if (hasChildren && ctx.session.childAges && ctx.session.childAges.length) {
+      ctx.session.childAges.pop();
+      ctx.session.currentChild = ctx.session.childAges.length + 1;
+      delete data.children_ages;
+    }
   } else if (currentState === S.ASK_TIME) {
     delete data.contact_time;
   }
@@ -200,6 +233,15 @@ survey.action(/^dest:(.+)$/, async (ctx) => {
   const tour = kb.TOURS[parseInt(val)];
   if (!tour) return;
   ctx.session.surveyData.destination = tour;
+  await promptState(ctx, S.ASK_STARS);
+});
+
+survey.action(/^stars:(.+)$/, async (ctx) => {
+  if (ctx.session.state !== S.ASK_STARS) return ctx.answerCbQuery();
+  const option = kb.STAR_OPTIONS.find(o => o.key === ctx.match[1]);
+  if (!option) return ctx.answerCbQuery();
+  await ctx.answerCbQuery();
+  ctx.session.surveyData.hotel_stars = option.key;
   await promptState(ctx, S.ASK_DATE);
 });
 
@@ -242,7 +284,7 @@ survey.action(/^children_(yes|no)$/, async (ctx) => {
   }
   ctx.session.surveyData.has_children = hasChildren;
   if (hasChildren) await promptState(ctx, S.ASK_CHILDREN_COUNT);
-  else await promptState(ctx, S.ASK_TIME);
+  else await promptState(ctx, S.ASK_PAYMENT);
 });
 
 survey.action(/^cc:(\d+)$/, async (ctx) => {
@@ -274,11 +316,21 @@ survey.action(/^age:(.+)$/, async (ctx) => {
   const total = parseInt(ctx.session.surveyData.children_count) || 0;
   if (ctx.session.currentChild >= total) {
     ctx.session.surveyData.children_ages = ctx.session.childAges.join(', ');
-    await promptState(ctx, S.ASK_TIME);
+    await promptState(ctx, S.ASK_PAYMENT);
   } else {
     ctx.session.currentChild++;
     await promptState(ctx, S.ASK_CHILD_AGE);
   }
+});
+
+survey.action(/^pay:(.+)$/, async (ctx) => {
+  if (ctx.session.state !== S.ASK_PAYMENT) return ctx.answerCbQuery();
+  const option = kb.PAYMENT_OPTIONS.find(o => o.key === ctx.match[1]);
+  if (!option) return ctx.answerCbQuery();
+  const lang = ctx.session.lang || 'uz';
+  await ctx.answerCbQuery('✅ ' + t(lang, option.tKey));
+  ctx.session.surveyData.payment_type = option.key;
+  await promptState(ctx, S.ASK_TIME);
 });
 
 survey.action(/^time_(\d+)$/, async (ctx) => {
@@ -339,7 +391,10 @@ survey.on('text', async (ctx) => {
       }
       ctx.session.surveyData.destination = text;
       await tryDeleteUserMsg(ctx);
-      await promptState(ctx, S.ASK_DATE);
+      await promptState(ctx, S.ASK_STARS);
+      break;
+    case S.ASK_STARS:
+      await promptState(ctx, S.ASK_STARS);
       break;
     case S.ASK_DATE:
       await promptState(ctx, S.ASK_DATE);
@@ -364,6 +419,9 @@ survey.on('text', async (ctx) => {
       break;
     case S.ASK_CHILD_AGE:
       await promptState(ctx, S.ASK_CHILD_AGE);
+      break;
+    case S.ASK_PAYMENT:
+      await promptState(ctx, S.ASK_PAYMENT);
       break;
     case S.ASK_TIME:
       await promptState(ctx, S.ASK_TIME);
@@ -402,9 +460,11 @@ async function sendToGroup(ctx, data) {
   let message =
     t(lang, 'g_newRequest') + '\n\n' +
     t(lang, 'g_destination') + ': ' + data.destination + '\n' +
+    (data.hotel_stars ? t(lang, 'g_hotelStars') + ': ' + starsText(lang, data.hotel_stars) + '\n' : '') +
     t(lang, 'g_date') + ': ' + data.travel_date + '\n' +
     t(lang, 'g_people') + ': ' + data.people_count + '\n' +
     t(lang, 'g_children') + ': ' + childrenText + '\n' +
+    (data.payment_type ? t(lang, 'g_paymentType') + ': ' + paymentText(lang, data.payment_type) + '\n' : '') +
     t(lang, 'g_contactTime') + ': ' + data.contact_time + '\n' +
     t(lang, 'g_phone') + ': ' + data.phone + '\n' +
     t(lang, 'g_username') + ': ' + username + '\n' +

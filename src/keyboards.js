@@ -30,6 +30,19 @@ const AGE_OPTIONS = [
   { key: '12plus', tKey: 'age12plus' },
 ];
 
+// Mehmonxona yulduzlari — key bazaga o'zgarmas holda yoziladi ('3','4','5')
+const STAR_OPTIONS = [
+  { key: '3', tKey: 'star3' },
+  { key: '4', tKey: 'star4' },
+  { key: '5', tKey: 'star5' },
+];
+
+// To'lov turi — key bazaga o'zgarmas holda yoziladi ('naqd','nasiya')
+const PAYMENT_OPTIONS = [
+  { key: 'naqd', tKey: 'payCash' },
+  { key: 'nasiya', tKey: 'payInstallment' },
+];
+
 function languageInline() {
   return Markup.inlineKeyboard([
     [
@@ -116,6 +129,22 @@ function childAgeInline(lang) {
   return Markup.inlineKeyboard(rows);
 }
 
+function hotelStarsInline(lang) {
+  const rows = STAR_OPTIONS.map(opt => [
+    Markup.button.callback(t(lang, opt.tKey), `stars:${opt.key}`)
+  ]);
+  rows.push([Markup.button.callback(t(lang, 'backBtn'), 'back')]);
+  return Markup.inlineKeyboard(rows);
+}
+
+function paymentInline(lang) {
+  const rows = [
+    PAYMENT_OPTIONS.map(opt => Markup.button.callback(t(lang, opt.tKey), `pay:${opt.key}`)),
+    [Markup.button.callback(t(lang, 'backBtn'), 'back')],
+  ];
+  return Markup.inlineKeyboard(rows);
+}
+
 function contactTimesInline(lang) {
   const times = dbApi.getContactTimes();
   const rows = [];
@@ -150,6 +179,8 @@ module.exports = {
   TOURS,
   DATE_OPTIONS,
   AGE_OPTIONS,
+  STAR_OPTIONS,
+  PAYMENT_OPTIONS,
   languageInline,
   destinationsInline,
   datesInline,
@@ -157,6 +188,8 @@ module.exports = {
   yesNoInline,
   childrenCountInline,
   childAgeInline,
+  hotelStarsInline,
+  paymentInline,
   contactTimesInline,
   backInline,
   phoneReply,

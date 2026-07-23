@@ -15,6 +15,13 @@ function childrenText(data) {
   return `Ha${parts.length ? ' (' + parts.join(', ') + ')' : ''}`;
 }
 
+// 'naqd' / 'nasiya' → CRM da o'qiladigan matn
+function paymentTypeText(paymentType) {
+  if (paymentType === 'naqd') return 'Naqd';
+  if (paymentType === 'nasiya') return 'Nasiya';
+  return undefined;
+}
+
 /** Startupда holatni ko'rsatish uchun */
 function crmStatus() {
   const url = process.env.CRM_WEBHOOK_URL;
@@ -33,9 +40,12 @@ async function sendToCrm(ctx, data) {
   const payload = {
     phone: data.phone,
     destination: data.destination,
+    hotelStars: data.hotel_stars ? parseInt(data.hotel_stars, 10) : undefined,
     travelDateText: data.travel_date,
     travelers: peopleToNumber(data.people_count),
     childrenText: childrenText(data),
+    paymentType: data.payment_type || undefined,
+    paymentTypeText: paymentTypeText(data.payment_type),
     contactTime: data.contact_time,
     telegramUsername: ctx.from && ctx.from.username ? '@' + ctx.from.username : undefined,
     telegramUserId: data.telegram_id,
